@@ -26,11 +26,12 @@ void init(FILE* file, char* buffer, const int buffer_size) {
 
 int advance_window(FILE* file, char* buffer, const int buffer_size) {
     shift(buffer, buffer_size);
-    char next_char = (char) fgetc(file);
-    buffer[buffer_size - 1] = next_char;
-    if (next_char == EOF || next_char < 32) {
-        char end[buffer_size];
-        memset(end, -1, buffer_size * sizeof(char));
+    buffer[buffer_size - 1] = fgetc(file);
+
+    char end[buffer_size];
+    memset(end, -1, buffer_size * sizeof(char));
+
+    if (buffer[buffer_size - 1] == EOF || buffer[buffer_size - 1]< 32) {
         if (memcmp(buffer, end, buffer_size * sizeof(char)) == 0) {
             return 0;
         }
@@ -40,15 +41,8 @@ int advance_window(FILE* file, char* buffer, const int buffer_size) {
     }
 }
 
-int starts_correctly(char* text) {
-    const char* start = "mul(";
-    for (int i = 0; i < 4; i++) {
-        if (text[i] != start[i]) {
-            return 0;
-        }
-    }
-
-    return 1;
+int starts_with(char* text, char* start, const int length) {
+    return memcmp(text, start, length * sizeof(char)) == 0;
 }
 
 int try_get_numbers(char* text, int* first, int* second) {
@@ -106,28 +100,6 @@ int try_get_numbers(char* text, int* first, int* second) {
     return 1;
 }
 
-int is_do(char* text) {
-    const char* do_text = "do()";
-    for (int i = 0; i < 4; i++) {
-        if (do_text[i] != text[i]) {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-int is_dont(char* text) {
-    const char* dont_text = "don't()";
-    for (int i = 0; i < 7; i++) {
-        if (dont_text[i] != text[i]) {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 int main() {
     FILE* file = fopen(input_path, "r");
     if (file == NULL) {
@@ -143,12 +115,12 @@ int main() {
 
     int enabled = 1;
     while(advance_window(file, buffer, BUFFER_SIZE)) {
-        if (is_do(buffer)) {
+        if (starts_with(buffer, "do()", 4)) {
             enabled = 1;
             continue;
         }
 
-        if (is_dont(buffer)) {
+        if (starts_with(buffer, "don't()", 7)) {
             enabled = 0;
             continue;
         }
@@ -157,7 +129,7 @@ int main() {
             continue;
         }
 
-        if (!starts_correctly(buffer)) {
+        if (!starts_with(buffer, "mul(", 4)) {
             continue;
         }
 
@@ -170,5 +142,5 @@ int main() {
 
     fclose(file);
     printf("Result: %d\n", result);
-    return 1;
+    return 0;
 }
